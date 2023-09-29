@@ -1,0 +1,13 @@
+<input id="fileupload" type="file" name="fileupload" />
+<button id="upload-button" onclick="uploadFile()" > Upload </button>
+
+<script>
+    async function uploadFile() {
+      let formData = new FormData(); 
+      formData.append("fileupload", fileupload.files[0]);
+        await fetch('http:localhost:3000/api/video', {
+        method: "POST", 
+        body: formData
+      }); 
+    }
+</script>
