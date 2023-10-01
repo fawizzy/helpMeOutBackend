@@ -1,36 +1,116 @@
-let formidable = require('formidable');
-let fs = require('fs');
-let path = require("path")
+const formidable = require("formidable");
+const fs = require("fs");
+const path = require("path");
+const mime = require("mime-types");
+const uuid = require("uuid");
+const { randomUUID } = require("crypto");
+const { consume } = require("../utils/consumer");
+const { publish } = require("../utils/publisher");
+const ffmpeg = require("fluent-ffmpeg");
+
+// const response = await openai.listEngines();
+
+const BASE_URL = "https://helpmeout-dod8.onrender.com";
 
 const videoUpload = (req, res) => {
-    let form = new formidable.IncomingForm();
-
-    //Process the file upload in Node
+  try {
+    const form = new formidable.IncomingForm();
+    const session_id = req.headers.session_id;
     form.parse(req, function (error, fields, file) {
-      let filepath = file.fileupload[0].filepath;
-      let uploadDestination = path.join(__dirname,"../uploads")
-      let newpath =path.join(uploadDestination, file.fileupload[0].originalFilename);
-      
+      const mimetype = file.fileupload[0].mimetype;
+      const filepath = file.fileupload[0].filepath;
+      const uploadDestination = path.join(__dirname, "../uploads", session_id);
 
-      if (!fs.existsSync(uploadDestination)){
-        fs.mkdirSync(uploadDestination)
+      if (!mimetype.startsWith("video")) {
+        res.status(403).json({ error: "file is not a video" });
+        return;
       }
-  
-      //Copy the uploaded file to a custom folder
-      fs.rename(filepath, newpath, function () {
-        //Send a NodeJS file upload confirmation message
-        res.write(newpath);
-        res.end();
-      });
-    });
-    try {
 
-        
-    } catch (error) {
-        
+      if (!fs.existsSync(uploadDestination)) {
+        fs.mkdir(uploadDestination, { recursive: true }, () => {});
+      }
+
+      let fileBuffer = fs.readFileSync(filepath);
+      let fileStream = fs.createWriteStream(
+        path.join(uploadDestination, `${session_id}.webm`),
+        { flags: "a" }
+      );
+      fileStream.write(fileBuffer);
+
+      res.status(200).json({ message: "file successfully uploaded" });
+      return;
+    });
+  } catch (error) {}
+};
+
+const createVideo = (req, res) => {
+  try {
+    const session_id = randomUUID();
+    const uploadDestination = path.join(__dirname, "../uploads", session_id);
+    if (!fs.existsSync(uploadDestination)) {
+      fs.mkdir(uploadDestination, { recursive: true }, () => {});
     }
-}
+    // res.cookie("session_id", session_id);
+    res.status(200).json({ session_id });
+    return;
+  } catch (error) {}
+};
+
+const getVideo = (req, res) => {
+  try {
+    const foldername = req.params.foldername;
+    const videoname = req.params.videoname;
+    const videopath = path.join(
+      __dirname,
+      "../uploads/",
+      foldername,
+      videoname
+    );
+
+    fs.access(videopath, fs.constants.F_OK, (err) => {
+      if (err) {
+        res.status(404).json({ error: "The file does not exist" });
+        return;
+      } else {
+        res.status(200).download(videopath);
+        return;
+      }
+    });
+  } catch (error) {}
+};
+
+const endVideo = async (req, res) => {
+  const axios = require("axios");
+  const session_id = req.headers.session_id;
+
+  const videopath = path.join(
+    __dirname,
+    "../uploads/",
+    session_id,
+    `${session_id}.webm`
+  );
+  const transcriptPath = path.join(
+    __dirname,
+    "../uploads",
+    session_id,
+    `${session_id}.txt`
+  );
+
+  publish(session_id, videopath);
+  const transcript = await consume(session_id);
+  var transcriptWriteStream = fs.createWriteStream(transcriptPath);
+  transcriptWriteStream.write(transcript);
+  transcriptWriteStream.end();
+
+  const video_link = `${BASE_URL}/api/video/d/${session_id}/${session_id}.webm`;
+  const transcript_link = `${BASE_URL}/api/video/d/${session_id}/${session_id}.txt`;
+
+  res.status(200).json({ video_link, transcript_link });
+};
 
 module.exports = {
-    videoUpload
-}
+  videoUpload,
+  getVideo,
+  createVideo,
+  endVideo,
+};
