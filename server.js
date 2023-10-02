@@ -21,13 +21,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api/video", videoRoute)
-app.get('/doc', (req, res) => {
-  // Use the `path` module to construct the file path
-  const filePath = path.join(__dirname,"html-client", 'index.html');
-  
-  // Send the HTML file as the response
-  res.sendFile(filePath);
-});
+
 
 // Start the server
 app.listen(port, () => {
