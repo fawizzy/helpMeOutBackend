@@ -10,7 +10,8 @@ const ffmpeg = require("fluent-ffmpeg");
 
 // const response = await openai.listEngines();
 
-const BASE_URL = "https://helpmeout-dod8.onrender.com";
+// const BASE_URL = "https://helpmeout-dod8.onrender.com";
+const BASE_URL = "localhost:3000";
 
 const videoUpload = (req, res) => {
   try {
@@ -80,32 +81,39 @@ const getVideo = (req, res) => {
 };
 
 const endVideo = async (req, res) => {
-  const axios = require("axios");
-  const session_id = req.headers.session_id;
+  try {
+    const axios = require("axios");
+    const session_id = req.headers.session_id;
 
-  const videopath = path.join(
-    __dirname,
-    "../uploads/",
-    session_id,
-    `${session_id}.webm`
-  );
-  const transcriptPath = path.join(
-    __dirname,
-    "../uploads",
-    session_id,
-    `${session_id}.txt`
-  );
+    const videopath = path.join(
+      __dirname,
+      "../uploads/",
+      session_id,
+      `${session_id}.webm`
+    );
+    const transcriptPath = path.join(
+      __dirname,
+      "../uploads",
+      session_id,
+      `${session_id}.txt`
+    );
 
-  publish(session_id, videopath);
-  const transcript = await consume(session_id);
-  var transcriptWriteStream = fs.createWriteStream(transcriptPath);
-  transcriptWriteStream.write(transcript);
-  transcriptWriteStream.end();
+    publish(session_id, videopath);
+    const transcript = await consume(session_id);
+    let transcript_link;
+    if (transcript) {
+      var transcriptWriteStream = fs.createWriteStream(transcriptPath);
+      transcriptWriteStream.write(transcript);
+      transcriptWriteStream.end();
+      transcript_link = `${BASE_URL}/api/video/d/${session_id}/${session_id}.txt`;
+    }else{
+      transcript_link= "error transcribing"
+    }
 
-  const video_link = `${BASE_URL}/api/video/d/${session_id}/${session_id}.webm`;
-  const transcript_link = `${BASE_URL}/api/video/d/${session_id}/${session_id}.txt`;
+    const video_link = `${BASE_URL}/api/video/d/${session_id}/${session_id}.webm`;
 
-  res.status(200).json({ video_link, transcript_link });
+    res.status(200).json({ video_link, transcript_link });
+  } catch (error) {}
 };
 
 module.exports = {

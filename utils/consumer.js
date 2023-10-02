@@ -23,11 +23,17 @@ const consume = async (session_id) => {
               mimetype: mime.contentType("webm"),
             });
             channel.ack(filepath);
-            resolve(response.results.channels[0].alternatives[0].transcript);
+            console.log("jobs gotten successfully")
+            if (response.results.channels[0]){
+              resolve(response.results.channels[0].alternatives[0].transcript);
+            }else{
+              resolve(false)
+            }
+            
           } catch (error) {
             console.error("Error during transcription:", error);
             channel.ack(filepath);
-            reject(error);
+            
           }
         });
       });
