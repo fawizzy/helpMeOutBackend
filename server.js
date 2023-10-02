@@ -13,7 +13,7 @@ const swaggerDocument = YAML.load('./api/swagger/swagger.yaml');
 const app = express();
 // Define a port for your server to listen on
 const port = process.env.PORT || 3000;
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
+app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.use(cors());
 app.use(express.urlencoded({ extended: false, limit: 100000, parameterLimit: 5 }));
