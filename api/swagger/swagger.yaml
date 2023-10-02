@@ -1,0 +1,76 @@
+swagger: "2.0"
+info:
+  title: HelpmeOutAPI
+  version: 1.0.0
+  description: API for HNGX-task 5 helpMeOutBackend
+
+host: helpmeout-dod8.onrender.com
+basePath: /api
+
+paths:
+  /video:
+    post:
+      summary: Upload a video
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: fileupload
+          in: formData
+          type: file
+        - name: session_id
+          in: header
+          type: string
+          description: Session ID
+      responses:
+        200:
+          description: Video successfully uploaded
+        403:
+          description: File is not a video
+
+  /video/d/{foldername}/{videoname}:
+    get:
+      summary: Get a video by folder name and video name
+      parameters:
+        - name: foldername
+          in: path
+          type: string
+          required: true
+          description: Folder name
+        - name: videoname
+          in: path
+          type: string
+          required: true
+          description: Video name
+      responses:
+        200:
+          description: Video file download
+        404:
+          description: Video file not found
+
+  /video/c/createvideo:
+    get:
+      summary: Create a new video session
+      responses:
+        200:
+          description: New session created
+      security:
+        - apiKey: []
+
+  /video/c/endvideo:
+    post:
+      summary: End a video session and process it
+      parameters:
+        - name: session_id
+          in: header
+          type: string
+          required: true
+          description: Session ID
+      responses:
+        200:
+          description: Video processing completed successfully
+
+securityDefinitions:
+  apiKey:
+    type: apiKey
+    in: header
+    name: session_id
