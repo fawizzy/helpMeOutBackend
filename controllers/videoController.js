@@ -10,8 +10,8 @@ const ffmpeg = require("fluent-ffmpeg");
 
 // const response = await openai.listEngines();
 
-// const BASE_URL = "https://helpmeout-dod8.onrender.com";
-const BASE_URL = "localhost:3000";
+const BASE_URL = "https://helpmeout-dod8.onrender.com";
+//const BASE_URL = "localhost:3000";
 
 const videoUpload = (req, res) => {
   try {
